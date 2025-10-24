@@ -14,8 +14,8 @@ export default function TodoList({ todos, onToggle, onDelete }) {
       showsVerticalScrollIndicator={false}
       ListEmptyComponent={
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>No todos yet!</Text>
-          <Text style={styles.emptySubtext}>Add your first todo above</Text>
+          <Text style={styles.emptyText}>No grocery items yet!</Text>
+          <Text style={styles.emptySubtext}>Add your first grocery item above</Text>
         </View>
       }
     />
@@ -35,12 +35,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    color: '#6c757d',
+    color: '#7ed957',
     fontWeight: '500',
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#adb5bd',
+    color: '#888',
     marginTop: 5,
   },
 });

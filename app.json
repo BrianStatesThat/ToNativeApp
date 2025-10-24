@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "TodoApp",
-    "slug": "TodoApp",
-    "version": "1.0.0",
+    "name": "GrocerLyst",
+    "slug": "GrocerLyst",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -20,10 +20,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.brianstatesthat.dftodo"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "6698f37e-c35f-4c27-a0da-81905df428e9"
+      }
     }
   }
 }

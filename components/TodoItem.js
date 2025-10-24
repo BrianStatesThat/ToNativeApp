@@ -25,7 +25,7 @@ export default function TodoItem({ item, onToggle, onDelete }) {
         style={styles.deleteButton}
         onPress={() => onDelete(item.id)}
       >
-        <Text style={styles.deleteButtonText}>🗑️</Text>
+        <Text style={styles.deleteButtonText}>×</Text>
       </TouchableOpacity>
     </View>
   );
@@ -35,18 +35,20 @@ const styles = StyleSheet.create({
   todoItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1a1a1a',
     marginVertical: 5,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
   todoContent: {
     flex: 1,
@@ -58,34 +60,47 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#dee2e6',
+    borderColor: '#7ed957',
     marginRight: 15,
     justifyContent: 'center',
     alignItems: 'center',
   },
   checkboxCompleted: {
-    backgroundColor: '#28a745',
-    borderColor: '#28a745',
+    backgroundColor: '#7ed957',
+    borderColor: '#7ed957',
   },
   checkmark: {
-    color: '#fff',
+    color: '#000',
     fontSize: 16,
     fontWeight: 'bold',
   },
   todoText: {
     flex: 1,
     fontSize: 16,
-    color: '#2c3e50',
+    color: '#fff',
   },
   todoTextCompleted: {
     textDecorationLine: 'line-through',
-    color: '#6c757d',
+    color: '#888',
   },
   deleteButton: {
     padding: 8,
+    backgroundColor: '#ff4444',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    textAlign: 'center',
   },
   deleteButtonText: {
-    fontSize: 18,
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
 });
 
