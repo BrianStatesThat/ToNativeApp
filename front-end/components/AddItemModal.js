@@ -7,6 +7,8 @@ import {
   Modal,
   StyleSheet,
   Alert,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -29,7 +31,10 @@ export default function AddItemModal({ visible, onClose, onConfirm }) {
     <Modal visible={visible} transparent animationType="fade">
       <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
       
-      <View style={styles.overlay}>
+      <KeyboardAvoidingView 
+        style={styles.overlay}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.modal}>
           <View style={styles.header}>
             <TouchableOpacity onPress={onClose}>
@@ -74,7 +79,7 @@ export default function AddItemModal({ visible, onClose, onConfirm }) {
             </TouchableOpacity>
           </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { 
   Text, 
@@ -7,14 +7,17 @@ import {
   FlatList,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 import ListDetailScreen from './screens/ListDetailScreen';
 import CreateListModal from './components/CreateListModal';
+import TermsModal from './components/TermsModal';
 
 const STORAGE_KEY = '@grocerylists';
+const TERMS_ACCEPTED_KEY = '@termsAccepted';
 
 export default function App() {
   const [lists, setLists] = useState([]);
@@ -23,22 +26,59 @@ export default function App() {
   const [showCreateList, setShowCreateList] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchVisible, setSearchVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const searchRef = useRef(null);
 
   useEffect(() => {
-    loadLists();
+    checkTermsAndLoadApp();
   }, []);
 
   useEffect(() => {
-    saveLists();
+    // Only save if lists exist AND terms accepted
+    if (lists.length > 0 && termsAccepted) {
+      saveLists();
+    }
   }, [lists]);
 
   useEffect(() => {
-    // focus the input when it becomes visible
     if (searchVisible && searchRef.current) {
       searchRef.current.focus();
     }
   }, [searchVisible]);
+
+  const checkTermsAndLoadApp = async () => {
+    try {
+      setIsLoading(true);
+      const termsAcceptedBefore = await AsyncStorage.getItem(TERMS_ACCEPTED_KEY);
+      
+      if (!termsAcceptedBefore) {
+        // First launch - show terms
+        setShowTerms(true);
+      } else {
+        // User already accepted - load app
+        setTermsAccepted(true);
+        loadLists();
+      }
+    } catch (error) {
+      console.error('Error checking terms:', error);
+      setIsLoading(false);
+    }
+  };
+
+  const handleTermsAccepted = async () => {
+    try {
+      await AsyncStorage.setItem(TERMS_ACCEPTED_KEY, 'true');
+      setTermsAccepted(true);
+      setShowTerms(false);
+      setIsLoading(true);
+      await loadLists();
+    } catch (error) {
+      console.error('Error accepting terms:', error);
+      setIsLoading(false);
+    }
+  };
 
   const saveLists = async () => {
     try {
@@ -54,7 +94,6 @@ export default function App() {
       if (savedLists !== null) {
         const parsed = JSON.parse(savedLists);
         setLists(parsed || []);
-        setSelectedListId(null);
       } else {
         const defaultList = {
           id: Date.now().toString(),
@@ -64,16 +103,16 @@ export default function App() {
           createdAt: new Date().toISOString(),
         };
         setLists([defaultList]);
-        setSelectedListId(null);
       }
     } catch (error) {
       console.error('Error loading lists:', error);
       setLists([]);
-      setSelectedListId(null);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const createList = (name, description) => {
+  const createList = useCallback((name, description) => {
     const newList = {
       id: Date.now().toString(),
       name,
@@ -81,25 +120,25 @@ export default function App() {
       items: [],
       createdAt: new Date().toISOString(),
     };
-    setLists([...lists, newList]);
+    setLists(prev => [...prev, newList]);
     setShowCreateList(false);
-  };
+  }, []);
 
-  const deleteList = (listId) => {
-    setLists(lists.filter(l => l.id !== listId));
+  const deleteList = useCallback((listId) => {
+    setLists(prev => prev.filter(l => l.id !== listId));
     if (selectedListId === listId) {
       setSelectedListId(null);
     }
-  };
+  }, [selectedListId]);
 
-  const updateList = (listId, updates = {}) => {
+  const updateList = useCallback((listId, updates = {}) => {
     setLists(prev =>
       prev.map(l => (l.id === listId ? { ...l, ...updates } : l))
     );
-  };
+  }, []);
 
-  const addItem = (listId, itemName) => {
-    setLists(lists.map(list => {
+  const addItem = useCallback((listId, itemName) => {
+    setLists(prev => prev.map(list => {
       if (list.id === listId) {
         return {
           ...list,
@@ -117,10 +156,10 @@ export default function App() {
       return list;
     }));
     setShowAddItem(false);
-  };
+  }, []);
 
-  const deleteItem = (listId, itemId) => {
-    setLists(lists.map(list => {
+  const deleteItem = useCallback((listId, itemId) => {
+    setLists(prev => prev.map(list => {
       if (list.id === listId) {
         return {
           ...list,
@@ -129,9 +168,9 @@ export default function App() {
       }
       return list;
     }));
-  };
+  }, []);
 
-  const toggleItem = (listId, itemId) => {
+  const toggleItem = useCallback((listId, itemId) => {
     setLists(prevLists =>
       prevLists.map(list => {
         if (list.id !== listId) return list;
@@ -148,10 +187,10 @@ export default function App() {
         return { ...list, items };
       })
     );
-  };
+  }, []);
 
-  const editItem = (listId, itemId, newName) => {
-    setLists(lists.map(list => {
+  const editItem = useCallback((listId, itemId, newName) => {
+    setLists(prev => prev.map(list => {
       if (list.id === listId) {
         return {
           ...list,
@@ -164,14 +203,40 @@ export default function App() {
       }
       return list;
     }));
-  };
+  }, []);
 
-  const selectedList = lists.find(l => l.id === selectedListId);
-  const filteredLists = lists.filter(list =>
-    list.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const selectedList = useMemo(() => 
+    lists.find(l => l.id === selectedListId),
+    [lists, selectedListId]
   );
 
-  // If a list is selected, show detail view
+  const filteredLists = useMemo(() => 
+    lists.filter(list =>
+      list.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ),
+    [lists, searchQuery]
+  );
+
+  // Show terms modal on first launch
+  if (showTerms) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <TermsModal visible={showTerms} onAccept={handleTermsAccepted} />
+      </SafeAreaView>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7ed957" />
+          <Text style={styles.loadingText}>Loading Lyst...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (selectedList) {
     return (
       <ListDetailScreen
@@ -191,7 +256,6 @@ export default function App() {
     );
   }
 
-  // Lists view (Landing Page)
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" />
@@ -200,9 +264,7 @@ export default function App() {
         <Text style={styles.headerTitle}>Lyst</Text>
         <TouchableOpacity
           onPress={() => {
-            // toggle search visibility
             setSearchVisible(v => !v);
-            // clear query when hiding
             if (searchVisible) setSearchQuery('');
           }}
           accessibilityLabel="Search"
@@ -212,7 +274,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      {searchVisible ? (
+      {searchVisible && (
         <View style={styles.searchContainer}>
           <MaterialIcons name="search" size={20} color="#666" />
           <TextInput
@@ -227,7 +289,7 @@ export default function App() {
             returnKeyType="search"
           />
         </View>
-      ) : null}
+      )}
 
       <FlatList
         data={filteredLists}
@@ -235,6 +297,7 @@ export default function App() {
           <TouchableOpacity
             style={styles.listCard}
             onPress={() => setSelectedListId(item.id)}
+            activeOpacity={0.7}
           >
             <View>
               <Text style={styles.listName}>{item.name}</Text>
@@ -248,6 +311,9 @@ export default function App() {
         keyExtractor={item => item.id}
         contentContainerStyle={styles.listContent}
         scrollEnabled={true}
+        maxToRenderPerBatch={10}
+        updateCellsBatchingPeriod={50}
+        removeClippedSubviews={true}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No lists yet</Text>
@@ -259,6 +325,7 @@ export default function App() {
       <TouchableOpacity
         style={styles.fab}
         onPress={() => setShowCreateList(true)}
+        activeOpacity={0.8}
       >
         <MaterialIcons name="add" size={32} color="#000" />
       </TouchableOpacity>
@@ -276,6 +343,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#000',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#7ed957',
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
   },
   header: {
     flexDirection: 'row',

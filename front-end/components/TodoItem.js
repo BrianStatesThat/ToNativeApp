@@ -1,23 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 
 export default function TodoItem({ item, onToggle, onDelete, onEdit }) {
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Item',
-      'Are you sure you want to remove this item?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: onDelete
-        }
-      ]
-    );
-  };
-
   return (
     <View style={styles.todoItem}>
       <TouchableOpacity 
@@ -46,7 +31,7 @@ export default function TodoItem({ item, onToggle, onDelete, onEdit }) {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.deleteButton}
-          onPress={handleDelete}
+          onPress={onDelete}
         >
           <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
         </TouchableOpacity>

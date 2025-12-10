@@ -5,15 +5,16 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  Alert,
   Modal,
   TextInput,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import TodoItem from '../components/TodoItem';
 import AddItemModal from '../components/AddItemModal';
+import AlertModal from '../components/AlertModal';
 
 export default function ListDetailScreen({
   list,
@@ -30,21 +31,18 @@ export default function ListDetailScreen({
   listId,
 }) {
   const [sortOrder, setSortOrder] = useState('newest');
-
-  // RENAME LIST modal state
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [renameName, setRenameName] = useState(list.name || '');
   const [renameDescription, setRenameDescription] = useState(list.description || '');
-
-  // EDIT ITEM modal state
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [editingText, setEditingText] = useState('');
+  const [deleteListAlert, setDeleteListAlert] = useState(false);
+  const [deleteItemAlert, setDeleteItemAlert] = useState(false);
+  const [deleteItemId, setDeleteItemId] = useState(null);
 
   const getSortedItems = () => {
     const items = list.items || [];
-
-    // keep completed items at the bottom
     const incomplete = items.filter(i => !i.completed);
     const completed = items.filter(i => i.completed);
 
@@ -57,32 +55,12 @@ export default function ListDetailScreen({
     incomplete.sort(compareFn);
     completed.sort(compareFn);
 
-    // show incomplete first (sorted), then completed (sorted)
     return [...incomplete, ...completed];
   };
 
   const items = list.items || [];
   const completedCount = items.filter(item => item.completed).length;
 
-  const handleDeleteList = () => {
-    Alert.alert(
-      'Delete List',
-      `Are you sure you want to delete "${list.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            onDeleteList();
-            onBack();
-          }
-        }
-      ]
-    );
-  };
-
-  // Open edit item modal
   const openEditItem = (item) => {
     setEditingItem(item);
     setEditingText(item.name || '');
@@ -91,7 +69,7 @@ export default function ListDetailScreen({
 
   const saveEditedItem = () => {
     if (!editingText.trim()) {
-      Alert.alert('Error', 'Item name cannot be empty');
+      alert('Item name cannot be empty');
       return;
     }
     onEditItem(editingItem.id, editingText.trim());
@@ -108,11 +86,32 @@ export default function ListDetailScreen({
 
   const saveRenameList = () => {
     if (!renameName.trim()) {
-      Alert.alert('Error', 'List name cannot be empty');
+      alert('List name cannot be empty');
       return;
     }
     onRenameList(renameName.trim(), (renameDescription || '').trim());
     setShowRenameModal(false);
+  };
+
+  const handleDeleteList = () => {
+    setDeleteListAlert(true);
+  };
+
+  const confirmDeleteList = () => {
+    onDeleteList();
+    onBack();
+  };
+
+  const handleDeleteItem = (itemId) => {
+    setDeleteItemId(itemId);
+    setDeleteItemAlert(true);
+  };
+
+  const confirmDeleteItem = () => {
+    if (deleteItemId) {
+      onDeleteItem(deleteItemId);
+      setDeleteItemId(null);
+    }
   };
 
   return (
@@ -130,13 +129,11 @@ export default function ListDetailScreen({
           )}
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity onPress={openRenameList} style={{ marginRight: 12 }} accessibilityLabel="Edit list" accessibilityHint="Edit the list name and description">
+          <TouchableOpacity onPress={openRenameList} style={{ marginRight: 12 }}>
             <MaterialIcons name="edit" size={22} color="#7ed957" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={handleDeleteList}
-            accessibilityLabel="Delete list"
-            accessibilityHint="Permanently deletes this list after confirmation"
             style={{ padding: 6 }}
           >
             <MaterialIcons name="delete-outline" size={24} color="#ff4444" />
@@ -144,7 +141,6 @@ export default function ListDetailScreen({
         </View>
       </View>
 
-      {/* Sort and Counter */}
       <View style={styles.statsContainer}>
         <TouchableOpacity 
           style={styles.sortButton}
@@ -163,17 +159,17 @@ export default function ListDetailScreen({
         </View>
       </View>
 
-      {/* Items List */}
       <FlatList
         data={getSortedItems()}
         renderItem={({ item }) => (
           <TodoItem
             item={item}
             onToggle={() => onToggleItem(item.id)}
-            onDelete={() => onDeleteItem(item.id)}
+            onDelete={() => handleDeleteItem(item.id)}
             onEdit={() => openEditItem(item)}
           />
-        )}
+        )
+        }
         keyExtractor={item => item.id}
         style={styles.itemsList}
         contentContainerStyle={styles.itemsContent}
@@ -185,7 +181,6 @@ export default function ListDetailScreen({
         }
       />
 
-      {/* Add Item Button */}
       <TouchableOpacity
         style={styles.fab}
         onPress={onAddItem}
@@ -204,9 +199,15 @@ export default function ListDetailScreen({
 
       {/* Edit Item Modal */}
       <Modal visible={showEditModal} transparent animationType="fade">
+        <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
         <View style={modalStyles.overlay}>
           <View style={modalStyles.modal}>
-            <Text style={modalStyles.title}>Edit Item</Text>
+            <View style={modalStyles.header}>
+              <Text style={modalStyles.title}>Edit Item</Text>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                <MaterialIcons name="close" size={24} color="#7ed957" />
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={modalStyles.input}
               value={editingText}
@@ -228,9 +229,15 @@ export default function ListDetailScreen({
 
       {/* Rename List Modal */}
       <Modal visible={showRenameModal} transparent animationType="fade">
+        <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
         <View style={modalStyles.overlay}>
           <View style={modalStyles.modal}>
-            <Text style={modalStyles.title}>Edit List</Text>
+            <View style={modalStyles.header}>
+              <Text style={modalStyles.title}>Edit List</Text>
+              <TouchableOpacity onPress={() => setShowRenameModal(false)}>
+                <MaterialIcons name="close" size={24} color="#7ed957" />
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={modalStyles.input}
               value={renameName}
@@ -258,6 +265,30 @@ export default function ListDetailScreen({
         </View>
       </Modal>
 
+      {/* Delete List Alert */}
+      <AlertModal
+        visible={deleteListAlert}
+        title="Delete List"
+        message={`Are you sure you want to delete "${list.name}"? This action cannot be undone.`}
+        buttons={[
+          { text: 'Cancel', onPress: () => {} },
+          { text: 'Delete', type: 'destructive', onPress: confirmDeleteList },
+        ]}
+        onDismiss={() => setDeleteListAlert(false)}
+      />
+
+      {/* Delete Item Alert */}
+      <AlertModal
+        visible={deleteItemAlert}
+        title="Delete Item"
+        message="Are you sure you want to remove this item? This action cannot be undone."
+        buttons={[
+          { text: 'Cancel', onPress: () => {} },
+          { text: 'Delete', type: 'destructive', onPress: confirmDeleteItem },
+        ]}
+        onDismiss={() => setDeleteItemAlert(false)}
+      />
+
     </SafeAreaView>
   );
 }
@@ -265,24 +296,30 @@ export default function ListDetailScreen({
 const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
   },
   modal: {
     backgroundColor: '#1a1a1a',
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#333',
+    padding: 20,
     width: '100%',
-    padding: 16,
+    maxWidth: 350,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
   },
   title: {
     fontSize: 18,
     color: '#fff',
     fontWeight: '700',
-    marginBottom: 12,
+    flex: 1,
   },
   input: {
     backgroundColor: '#000',
@@ -292,7 +329,7 @@ const modalStyles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     color: '#fff',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   buttons: {
     flexDirection: 'row',
