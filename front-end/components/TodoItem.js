@@ -1,32 +1,56 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 
-export default function TodoItem({ item, onToggle, onDelete }) {
+export default function TodoItem({ item, onToggle, onDelete, onEdit }) {
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Item',
+      'Are you sure you want to remove this item?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: onDelete
+        }
+      ]
+    );
+  };
+
   return (
     <View style={styles.todoItem}>
       <TouchableOpacity 
         style={styles.todoContent}
-        onPress={() => onToggle(item.id)}
+        onPress={onToggle}
       >
         <View style={[
           styles.checkbox, 
           item.completed && styles.checkboxCompleted
         ]}>
-          {item.completed && <Text style={styles.checkmark}>✓</Text>}
+          {item.completed && (
+            <MaterialIcons name="check" size={14} color="#000" />
+          )}
         </View>
         <Text style={[
           styles.todoText, 
           item.completed && styles.todoTextCompleted
         ]}>
-          {item.text}
+          {item.name}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity 
-        style={styles.deleteButton}
-        onPress={() => onDelete(item.id)}
-      >
-        <Text style={styles.deleteButtonText}>×</Text>
-      </TouchableOpacity>
+
+      <View style={styles.actions}>
+        <TouchableOpacity onPress={onEdit} style={styles.iconButton}>
+          <MaterialIcons name="edit" size={20} color="#7ed957" />
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={handleDelete}
+        >
+          <MaterialIcons name="delete-outline" size={20} color="#ff4444" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -36,19 +60,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    marginVertical: 5,
-    padding: 15,
-    borderRadius: 12,
+    marginVertical: 6,
+    padding: 12,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#333',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
   },
   todoContent: {
     flex: 1,
@@ -56,12 +72,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 20,
+    height: 20,
+    borderRadius: 4,
     borderWidth: 2,
     borderColor: '#7ed957',
-    marginRight: 15,
+    marginRight: 12,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -69,38 +85,26 @@ const styles = StyleSheet.create({
     backgroundColor: '#7ed957',
     borderColor: '#7ed957',
   },
-  checkmark: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   todoText: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#fff',
   },
   todoTextCompleted: {
     textDecorationLine: 'line-through',
     color: '#888',
   },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconButton: {
+    padding: 8,
+    marginRight: 6,
+  },
   deleteButton: {
     padding: 8,
-    backgroundColor: '#ff4444',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    textAlign: 'center',
-  },
-  deleteButtonText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    lineHeight: 16,
-    includeFontPadding: false,
-    textAlignVertical: 'center',
+    marginLeft: 2,
   },
 });
 
