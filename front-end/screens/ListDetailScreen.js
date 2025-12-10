@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Modal,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -200,7 +202,10 @@ export default function ListDetailScreen({
       {/* Edit Item Modal */}
       <Modal visible={showEditModal} transparent animationType="fade">
         <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
-        <View style={modalStyles.overlay}>
+        <KeyboardAvoidingView 
+          style={modalStyles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={modalStyles.modal}>
             <View style={modalStyles.header}>
               <Text style={modalStyles.title}>Edit Item</Text>
@@ -224,13 +229,16 @@ export default function ListDetailScreen({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Rename List Modal */}
       <Modal visible={showRenameModal} transparent animationType="fade">
         <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFillObject} />
-        <View style={modalStyles.overlay}>
+        <KeyboardAvoidingView 
+          style={modalStyles.overlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
           <View style={modalStyles.modal}>
             <View style={modalStyles.header}>
               <Text style={modalStyles.title}>Edit List</Text>
@@ -262,7 +270,7 @@ export default function ListDetailScreen({
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Delete List Alert */}

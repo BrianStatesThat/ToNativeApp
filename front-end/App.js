@@ -97,14 +97,8 @@ export default function App() {
         const parsed = JSON.parse(savedLists);
         setLists(parsed || []);
       } else {
-        const defaultList = {
-          id: Date.now().toString(),
-          name: 'Grocery Shopping',
-          description: '',
-          items: [],
-          createdAt: new Date().toISOString(),
-        };
-        setLists([defaultList]);
+        // Start with empty array instead of default list
+        setLists([]);
       }
     } catch (error) {
       console.error('Error loading lists:', error);
