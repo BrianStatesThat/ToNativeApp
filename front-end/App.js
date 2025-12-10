@@ -15,6 +15,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import ListDetailScreen from './screens/ListDetailScreen';
 import CreateListModal from './components/CreateListModal';
 import TermsModal from './components/TermsModal';
+import AboutScreen from './screens/AboutScreen';
 
 const STORAGE_KEY = '@grocerylists';
 const TERMS_ACCEPTED_KEY = '@termsAccepted';
@@ -29,6 +30,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const searchRef = useRef(null);
 
   useEffect(() => {
@@ -256,22 +258,35 @@ export default function App() {
     );
   }
 
+  if (showAbout) {
+    return (
+      <AboutScreen
+        onBack={() => setShowAbout(false)}
+        onShowTerms={() => setShowTerms(true)}
+      />
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" />
       
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Lyst</Text>
-        <TouchableOpacity
-          onPress={() => {
-            setSearchVisible(v => !v);
-            if (searchVisible) setSearchQuery('');
-          }}
-          accessibilityLabel="Search"
-          accessibilityHint="Show search input"
-        >
-          <MaterialIcons name={searchVisible ? "close" : "search"} size={24} color="#fff" />
-        </TouchableOpacity>
+        <View style={styles.headerIcons}>
+          <TouchableOpacity
+            onPress={() => {
+              setSearchVisible(v => !v);
+              if (searchVisible) setSearchQuery('');
+            }}
+            style={{ marginRight: 12 }}
+          >
+            <MaterialIcons name="search" size={24} color={searchVisible ? "#7ed957" : "#fff"} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => setShowAbout(true)}>
+            <MaterialIcons name="info" size={24} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {searchVisible && (
@@ -361,6 +376,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   headerTitle: {
     fontSize: 32,
